@@ -16,15 +16,16 @@ const wss = new WebSocket.Server({
 app.use(express.json());
 app.use(express.static('public'));
 
+const AMPLIFY_DOMAIN = 'main.d1iok5v17eqbqv.amplifyapp.com';
+
 // Handle incoming voice calls
 app.post('/voice', (req, res) => {
   console.log('Twilio Voice Request:', req.body);
   const twiml = new VoiceResponse();
   
   try {
-    // Get WebSocket URL
-    const host = req.headers.host;
-    const wsUrl = `wss://${host}/stream`;
+    // Get WebSocket URL using Amplify domain
+    const wsUrl = `wss://${AMPLIFY_DOMAIN}/stream`;
     
     console.log('WebSocket URL:', wsUrl);
     
