@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
@@ -15,8 +17,17 @@ const wss = new WebSocket.Server({
 
 app.use(express.json());
 app.use(express.static('public'));
+app.use('/js', express.static('public/js'));
 
 const AMPLIFY_DOMAIN = 'main.d1iok5v17eqbqv.amplifyapp.com';
+
+console.log('OpenAI Key loaded:', !!process.env.OPENAI_API_KEY);
+console.log('OpenAI Key starts with:', process.env.OPENAI_API_KEY?.substring(0, 10) + '...');
+
+// Add environment check
+if (!process.env.OPENAI_API_KEY) {
+    console.error('ERROR: OPENAI_API_KEY is not set in environment variables');
+}
 
 // Handle incoming voice calls
 app.post('/voice', (req, res) => {
@@ -213,7 +224,7 @@ async function getRealtimeSession() {
   try {
     const response = await axios.post('https://api.openai.com/v1/realtime/sessions', {
       model: "gpt-4o-realtime-preview-2024-12-17",
-      modalities: ["audio"],
+      modalities: ["audio", "text"],
       voice: "alloy",
       input_audio_format: "pcm16",
       output_audio_format: "pcm16"
@@ -268,6 +279,53 @@ app.post('/call-status', (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).send('Internal Server Error');
+});
+
+// Add this route to server.js
+app.post('/create-session', async (req, res) => {
+    try {
+        const settings = req.body;
+        console.log('Creating session with settings:', settings);
+
+        const response = await axios.post('https://api.openai.com/v1/realtime/sessions', {
+            model: settings.model,
+            modalities: ["audio", "text"],
+            voice: settings.voice,
+            input_audio_format: "pcm16",
+            output_audio_format: "pcm16",
+            turn_detection: {
+                type: settings.turnDetection.type === 'voice-activity' ? 'server_vad' : 'disabled',
+                threshold: settings.turnDetection.threshold,
+                prefix_padding_ms: settings.turnDetection.prefixPadding,
+                silence_duration_ms: settings.turnDetection.silenceDuration,
+                create_response: true
+            }
+        }, {
+            headers: {
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log('Session created:', response.data);
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error creating session:', error.response?.data || error.message);
+        res.status(500).json({ 
+            error: 'Failed to create session',
+            details: error.response?.data || error.message
+        });
+    }
+});
+
+// Add a route to serve client.js
+app.get('/client.js', (req, res) => {
+    res.sendFile(__dirname + '/public/js/client.js');
+});
+
+// Add this route
+app.get('/test', (req, res) => {
+    res.json({ status: 'ok' });
 });
 
 const PORT = process.env.PORT || 3000;

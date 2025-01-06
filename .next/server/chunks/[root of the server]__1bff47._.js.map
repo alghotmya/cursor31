@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 135, "column": 0}, "map": {"version":3,"sources":["file:///Users/ahmedalghotmy/Documents/cursor3/src/app/api/chat/route.ts"],"sourcesContent":["import { NextResponse } from 'next/server';\nimport OpenAI from 'openai';\n\nexport async function POST(request: Request) {\n  try {\n    const openai = new OpenAI({\n      apiKey: process.env.OPENAI_API_KEY,\n    });\n\n    const { messages, model } = await request.json();\n\n    const completion = await openai.chat.completions.create({\n      model,\n      messages,\n    });\n\n    return NextResponse.json({\n      content: completion.choices[0].message.content\n    });\n  } catch (error) {\n    console.error('Error:', error);\n    return NextResponse.json(\n      { error: 'Failed to get chat response' },\n      { status: 500 }\n    );\n  }\n} "],"names":[],"mappings":";;;AAAA;AACA;;;AAEO,eAAe,KAAK,OAAgB;IACzC,IAAI;QACF,MAAM,SAAS,IAAI,kJAAA,CAAA,UAAM,CAAC;YACxB,QAAQ,QAAQ,GAAG,CAAC,cAAc;QACpC;QAEA,MAAM,EAAE,QAAQ,EAAE,KAAK,EAAE,GAAG,MAAM,QAAQ,IAAI;QAE9C,MAAM,aAAa,MAAM,OAAO,IAAI,CAAC,WAAW,CAAC,MAAM,CAAC;YACtD;YACA;QACF;QAEA,OAAO,gIAAA,CAAA,eAAY,CAAC,IAAI,CAAC;YACvB,SAAS,WAAW,OAAO,CAAC,EAAE,CAAC,OAAO,CAAC,OAAO;QAChD;IACF,EAAE,OAAO,OAAO;QACd,QAAQ,KAAK,CAAC,UAAU;QACxB,OAAO,gIAAA,CAAA,eAAY,CAAC,IAAI,CACtB;YAAE,OAAO;QAA8B,GACvC;YAAE,QAAQ;QAAI;IAElB;AACF"}},
+    {"offset": {"line": 164, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

@@ -1,10 +1,479 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Twilio OpenAI Voice</title>
+    <title>OpenAI Voice Integration</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background-color: #202123;
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar-item {
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar-item:hover {
+            background-color: #2A2B32;
+        }
+
+        .sidebar-item.active {
+            background-color: #343541;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            background-color: #343541;
+            padding: 20px;
+            color: white;
+        }
+
+        .section {
+            display: none;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Common Elements */
+        h1 {
+            color: #ECECF1;
+            margin-bottom: 30px;
+        }
+
+        .status {
+            padding: 10px;
+            margin: 20px 0;
+            border-radius: 4px;
+            background-color: #2A2B32;
+        }
+
+        .card {
+            background-color: #444654;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        input, button, textarea {
+            background-color: #40414F;
+            border: 1px solid #565869;
+            color: white;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #10A37F;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #0E906F;
+        }
+
+        /* Chat Section */
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #444654;
+            border-radius: 8px;
+        }
+
+        /* Realtime Section */
+        .realtime-controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        /* Twilio Section */
+        .phone-input {
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
+
+        .call-status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .realtime-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .realtime-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .conversation-area {
+            flex: 1;
+            min-height: 500px;
+        }
+
+        .conversation-display {
+            background-color: #2A2B32;
+            padding: 20px;
+            border-radius: 8px;
+            height: 100%;
+            min-height: 500px;
+        }
+
+        .settings-panel {
+            width: 300px;
+        }
+
+        .settings-card {
+            margin-bottom: 20px;
+        }
+
+        .settings-input {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .settings-group {
+            display: flex;
+            gap: 20px;
+            margin: 10px 0;
+        }
+
+        .slider-group {
+            margin: 15px 0;
+        }
+
+        .slider-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .select-style {
+            background-color: #40414F;
+            color: white;
+            border: 1px solid #565869;
+            padding: 8px;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        .control-panel {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            align-items: center;
+        }
+
+        .primary-button {
+            background-color: #10A37F;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .mic-select {
+            flex: 1;
+        }
+    </style>
 </head>
 <body>
-    <h1>Twilio OpenAI Voice Service</h1>
-    <p>Status: Running</p>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>OpenAI Voice</h2>
+        <div class="sidebar-item active" onclick="showSection('chat')">💬 Chat</div>
+        <div class="sidebar-item" onclick="showSection('realtime')">🎙️ Realtime</div>
+        <div class="sidebar-item" onclick="showSection('twilio')">📞 Twilio Integration</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Chat Section -->
+        <div id="chat-section" class="section active">
+            <h1>Chat</h1>
+            <div class="chat-container" id="chat-messages">
+                <!-- Chat messages will appear here -->
+            </div>
+            <div class="card">
+                <textarea 
+                    placeholder="Type your message here..." 
+                    rows="4"
+                    id="chat-input"
+                ></textarea>
+                <button onclick="sendChatMessage()">Send Message</button>
+            </div>
+        </div>
+
+        <!-- Realtime Section -->
+        <div id="realtime-section" class="section">
+            <div class="realtime-header">
+                <h1>Realtime</h1>
+                <div class="model-selector">
+                    <select id="model-select" class="select-style">
+                        <option value="gpt-4o-realtime-preview-2024-12-17">gpt-4o-realtime-preview-2024-12-17</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="realtime-container">
+                <div class="conversation-area">
+                    <div id="conversation-display" class="conversation-display">
+                        Conversation will appear here
+                    </div>
+                </div>
+
+                <div class="settings-panel">
+                    <div class="card settings-card">
+                        <h3>System instructions</h3>
+                        <textarea 
+                            id="system-instructions" 
+                            rows="4" 
+                            class="settings-input"
+                        >Your knowledge cutoff is 2023-10. You are a helpful, witty, and friendly AI. Act like a human, but remember that you aren't a human and that you can't do human things in the real world. Your voice and personality should be natural and engaging.</textarea>
+                    </div>
+
+                    <div class="card settings-card">
+                        <h3>Voice</h3>
+                        <select id="voice-select" class="settings-input">
+                            <option value="alloy">Alloy</option>
+                            <option value="echo">Echo</option>
+                            <option value="fable">Fable</option>
+                            <option value="onyx">Onyx</option>
+                            <option value="nova">Nova</option>
+                            <option value="shimmer">Shimmer</option>
+                        </select>
+                    </div>
+
+                    <div class="card settings-card">
+                        <h3>Server turn detection</h3>
+                        <div class="settings-group">
+                            <label>
+                                <input type="radio" name="turn-detection" value="voice-activity" checked>
+                                Voice activity
+                            </label>
+                            <label>
+                                <input type="radio" name="turn-detection" value="disabled">
+                                Disabled
+                            </label>
+                        </div>
+
+                        <div class="slider-group">
+                            <label>Threshold</label>
+                            <input type="range" id="threshold" min="0" max="1" step="0.01" value="0.5">
+                            <span id="threshold-value">0.50</span>
+                        </div>
+
+                        <div class="slider-group">
+                            <label>Prefix padding</label>
+                            <input type="range" id="prefix-padding" min="0" max="1000" step="10" value="300">
+                            <span id="prefix-padding-value">300ms</span>
+                        </div>
+
+                        <div class="slider-group">
+                            <label>Silence duration</label>
+                            <input type="range" id="silence-duration" min="0" max="2000" step="10" value="500">
+                            <span id="silence-duration-value">500ms</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <button id="start-session" class="primary-button" onclick="startSession()">
+                    Start session
+                </button>
+                <div class="mic-select">
+                    <select id="mic-select" class="select-style">
+                        <option value="default">Default - Jabra Evolve2 65</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Twilio Section -->
+        <div id="twilio-section" class="section">
+            <h1>Twilio Voice Integration</h1>
+            <div class="card">
+                <h3>Make a Call</h3>
+                <input 
+                    type="tel" 
+                    id="phoneNumber" 
+                    class="phone-input"
+                    placeholder="Enter phone number (+1XXXXXXXXXX)"
+                >
+                <button onclick="makeCall()">Call Now</button>
+            </div>
+            <div class="card">
+                <h3>Direct Call Number</h3>
+                <p>To speak with AI directly, call: <strong>+15484909302</strong></p>
+            </div>
+            <div class="call-status" id="call-status"></div>
+        </div>
+    </div>
+
+    <script src="/js/client.js"></script>
+    <script src="https://bundle.run/buffer@6.0.3"></script>
+    <script>
+        // Make Buffer available globally
+        window.Buffer = buffer.Buffer;
+
+        // Section Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all sidebar items
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(`${sectionId}-section`).classList.add('active');
+            
+            // Highlight sidebar item
+            event.target.classList.add('active');
+        }
+
+        // Chat Functions
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (message) {
+                const chatContainer = document.getElementById('chat-messages');
+                chatContainer.innerHTML += `
+                    <div class="card">
+                        <strong>You:</strong> ${message}
+                    </div>
+                `;
+                input.value = '';
+                // Add API call here
+            }
+        }
+
+        // Realtime Functions
+        async function startSession() {
+            const button = document.getElementById('start-session');
+            const settings = getSettings();
+            
+            try {
+                button.disabled = true;
+                button.textContent = 'Starting...';
+                
+                // Create OpenAI session with current settings
+                const response = await fetch('/create-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(settings)
+                });
+                
+                if (response.ok) {
+                    button.textContent = 'Stop session';
+                    initializeWebSocket(settings);
+                } else {
+                    throw new Error('Failed to create session');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                button.textContent = 'Start session';
+                button.disabled = false;
+            }
+        }
+
+        function getSettings() {
+            return {
+                model: document.getElementById('model-select').value,
+                voice: document.getElementById('voice-select').value,
+                systemInstructions: document.getElementById('system-instructions').value,
+                turnDetection: {
+                    type: document.querySelector('input[name="turn-detection"]:checked').value,
+                    threshold: parseFloat(document.getElementById('threshold').value),
+                    prefixPadding: parseInt(document.getElementById('prefix-padding').value),
+                    silenceDuration: parseInt(document.getElementById('silence-duration').value)
+                }
+            };
+        }
+
+        // Add event listeners for sliders
+        document.getElementById('threshold').addEventListener('input', function(e) {
+            document.getElementById('threshold-value').textContent = e.target.value;
+        });
+
+        document.getElementById('prefix-padding').addEventListener('input', function(e) {
+            document.getElementById('prefix-padding-value').textContent = `${e.target.value}ms`;
+        });
+
+        document.getElementById('silence-duration').addEventListener('input', function(e) {
+            document.getElementById('silence-duration-value').textContent = `${e.target.value}ms`;
+        });
+
+        // Twilio Functions
+        async function makeCall() {
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const statusDiv = document.getElementById('call-status');
+            
+            if (!phoneNumber) {
+                statusDiv.textContent = 'Please enter a phone number';
+                return;
+            }
+
+            try {
+                statusDiv.textContent = 'Initiating call...';
+                const response = await fetch('/callback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ phoneNumber })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    statusDiv.textContent = 'Call initiated! You will receive a call shortly.';
+                } else {
+                    statusDiv.textContent = 'Error: ' + (data.error || 'Failed to initiate call');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.textContent = 'Error making call. Please try again.';
+            }
+        }
+    </script>
 </body>
 </html> 

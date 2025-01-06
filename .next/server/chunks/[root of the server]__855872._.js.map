@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 55, "column": 0}, "map": {"version":3,"sources":["file:///Users/ahmedalghotmy/Documents/cursor3/src/app/api/realtime-session/route.ts"],"sourcesContent":["import { NextResponse } from 'next/server';\n\nexport async function GET() {\n  try {\n    // For testing only - replace with actual OpenAI realtime session creation\n    const mockToken = process.env.OPENAI_API_KEY;\n\n    return NextResponse.json({\n      client_secret: {\n        value: mockToken\n      }\n    });\n  } catch (error: any) {\n    console.error('Error getting session token:', error);\n    return NextResponse.json(\n      { error: error.message || 'Failed to get session token' },\n      { status: 500 }\n    );\n  }\n} "],"names":[],"mappings":";;;AAAA;;AAEO,eAAe;IACpB,IAAI;QACF,0EAA0E;QAC1E,MAAM,YAAY,QAAQ,GAAG,CAAC,cAAc;QAE5C,OAAO,gIAAA,CAAA,eAAY,CAAC,IAAI,CAAC;YACvB,eAAe;gBACb,OAAO;YACT;QACF;IACF,EAAE,OAAO,OAAY;QACnB,QAAQ,KAAK,CAAC,gCAAgC;QAC9C,OAAO,gIAAA,CAAA,eAAY,CAAC,IAAI,CACtB;YAAE,OAAO,MAAM,OAAO,IAAI;QAA8B,GACxD;YAAE,QAAQ;QAAI;IAElB;AACF"}},
+    {"offset": {"line": 78, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

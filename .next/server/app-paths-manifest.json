@@ -1,0 +1,6 @@
+{
+  "/page": "app/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/api/realtime-session/route": "app/api/realtime-session/route.js",
+  "/api/twilio/call/route": "app/api/twilio/call/route.js"
+}
