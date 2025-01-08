@@ -288,22 +288,24 @@ app.post('/create-session', async (req, res) => {
         console.log('Creating session with settings:', settings);
 
         const response = await axios.post('https://api.openai.com/v1/realtime/sessions', {
-            model: settings.model,
+            model: settings.model || 'gpt-4o-realtime-preview-2024-12-17',
             modalities: ["audio", "text"],
-            voice: settings.voice,
-            input_audio_format: "pcm16",
-            output_audio_format: "pcm16",
+            voice: settings.voice || 'alloy',
+            instructions: settings.systemInstructions || "You are a helpful assistant.",
             turn_detection: {
                 type: settings.turnDetection.type === 'voice-activity' ? 'server_vad' : 'disabled',
                 threshold: settings.turnDetection.threshold,
                 prefix_padding_ms: settings.turnDetection.prefixPadding,
                 silence_duration_ms: settings.turnDetection.silenceDuration,
                 create_response: true
-            }
+            },
+            input_audio_format: "pcm16",
+            output_audio_format: "pcm16"
         }, {
             headers: {
                 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'OpenAI-Beta': 'realtime=v1'
             }
         });
 
@@ -318,14 +320,28 @@ app.post('/create-session', async (req, res) => {
     }
 });
 
-// Add a route to serve client.js
-app.get('/client.js', (req, res) => {
-    res.sendFile(__dirname + '/public/js/client.js');
-});
-
 // Add this route
 app.get('/test', (req, res) => {
     res.json({ status: 'ok' });
+});
+
+// Add this temporary debug route
+app.get('/debug', (req, res) => {
+    const fs = require('fs');
+    const path = require('path');
+    
+    const files = {
+        'public/js/client.js': fs.existsSync(path.join(__dirname, 'public/js/client.js')),
+        'public/index.html': fs.existsSync(path.join(__dirname, 'public/index.html'))
+    };
+    
+    res.json({
+        currentDir: __dirname,
+        files,
+        staticPaths: app._router.stack
+            .filter(r => r.name === 'serveStatic')
+            .map(r => r.regexp.toString())
+    });
 });
 
 const PORT = process.env.PORT || 3000;

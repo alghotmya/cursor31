@@ -207,6 +207,68 @@
         .mic-select {
             flex: 1;
         }
+
+        /* Chat Message Styles */
+        .message {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.ai {
+            background-color: #444654;
+            margin-left: auto;
+            color: #ECECF1;
+        }
+
+        .message.system {
+            background-color: #2A2B32;
+            margin: 5px auto;
+            color: #FF4444;
+            text-align: center;
+        }
+
+        .message.you {
+            background-color: #343541;
+            margin-right: auto;
+            color: #ECECF1;
+        }
+
+        #conversation-display {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        #conversation-display::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #conversation-display::-webkit-scrollbar-track {
+            background: #2A2B32;
+            border-radius: 4px;
+        }
+
+        #conversation-display::-webkit-scrollbar-thumb {
+            background: #565869;
+            border-radius: 4px;
+        }
+
+        button.secondary-button {
+            background-color: #40414F;
+            margin-left: 10px;
+        }
+
+        button.secondary-button:hover {
+            background-color: #565869;
+        }
     </style>
 </head>
 <body>
@@ -268,11 +330,13 @@
                         <h3>Voice</h3>
                         <select id="voice-select" class="settings-input">
                             <option value="alloy">Alloy</option>
+                            <option value="ash">Ash</option>
+                            <option value="ballad">Ballad</option>
+                            <option value="coral">Coral</option>
                             <option value="echo">Echo</option>
-                            <option value="fable">Fable</option>
-                            <option value="onyx">Onyx</option>
-                            <option value="nova">Nova</option>
+                            <option value="sage">Sage</option>
                             <option value="shimmer">Shimmer</option>
+                            <option value="verse">Verse</option>
                         </select>
                     </div>
 
@@ -313,6 +377,9 @@
             <div class="control-panel">
                 <button id="start-session" class="primary-button" onclick="startSession()">
                     Start session
+                </button>
+                <button onclick="clearConversation()" class="secondary-button">
+                    Clear Chat
                 </button>
                 <div class="mic-select">
                     <select id="mic-select" class="select-style">
@@ -386,36 +453,6 @@
         }
 
         // Realtime Functions
-        async function startSession() {
-            const button = document.getElementById('start-session');
-            const settings = getSettings();
-            
-            try {
-                button.disabled = true;
-                button.textContent = 'Starting...';
-                
-                // Create OpenAI session with current settings
-                const response = await fetch('/create-session', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(settings)
-                });
-                
-                if (response.ok) {
-                    button.textContent = 'Stop session';
-                    initializeWebSocket(settings);
-                } else {
-                    throw new Error('Failed to create session');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                button.textContent = 'Start session';
-                button.disabled = false;
-            }
-        }
-
         function getSettings() {
             return {
                 model: document.getElementById('model-select').value,
