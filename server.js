@@ -7,6 +7,7 @@ const twilio = require('twilio');
 const axios = require('axios');
 const VoiceResponse = twilio.twiml.VoiceResponse;
 const g711 = require('g711');
+const cors = require('cors');
 
 const app = express();
 const server = http.createServer(app);
@@ -15,6 +16,7 @@ const wss = new WebSocket.Server({
   path: '/stream'
 });
 
+app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 app.use('/js', express.static('public/js'));
@@ -226,6 +228,7 @@ async function getRealtimeSession() {
       model: "gpt-4o-realtime-preview-2024-12-17",
       modalities: ["audio", "text"],
       voice: "alloy",
+      instructions: "You are a helpful assistant.",
       input_audio_format: "pcm16",
       output_audio_format: "pcm16"
     }, {
@@ -284,6 +287,9 @@ app.use((err, req, res, next) => {
 // Add this route to server.js
 app.post('/create-session', async (req, res) => {
     try {
+        // Set JSON content type
+        res.setHeader('Content-Type', 'application/json');
+        
         const settings = req.body;
         console.log('Creating session with settings:', settings);
 
@@ -291,12 +297,12 @@ app.post('/create-session', async (req, res) => {
             model: settings.model || 'gpt-4o-realtime-preview-2024-12-17',
             modalities: ["audio", "text"],
             voice: settings.voice || 'alloy',
-            instructions: settings.systemInstructions || "You are a helpful assistant.",
+            instructions: settings.instructions || "You are a helpful assistant.",
             turn_detection: {
-                type: settings.turnDetection.type === 'voice-activity' ? 'server_vad' : 'disabled',
-                threshold: settings.turnDetection.threshold,
-                prefix_padding_ms: settings.turnDetection.prefixPadding,
-                silence_duration_ms: settings.turnDetection.silenceDuration,
+                type: 'server_vad',
+                threshold: 0.5,
+                prefix_padding_ms: 300,
+                silence_duration_ms: 500,
                 create_response: true
             },
             input_audio_format: "pcm16",
@@ -309,12 +315,12 @@ app.post('/create-session', async (req, res) => {
             }
         });
 
-        console.log('Session created:', response.data);
         res.json(response.data);
     } catch (error) {
-        console.error('Error creating session:', error.response?.data || error.message);
+        // Ensure error response is also JSON
         res.status(500).json({ 
-            error: 'Failed to create session',
+            error: true,
+            message: error.message,
             details: error.response?.data || error.message
         });
     }
@@ -341,6 +347,76 @@ app.get('/debug', (req, res) => {
         staticPaths: app._router.stack
             .filter(r => r.name === 'serveStatic')
             .map(r => r.regexp.toString())
+    });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Server error:', err);
+    res.status(500).json({
+        error: true,
+        message: 'Internal server error',
+        details: err.message
+    });
+});
+
+// Chat endpoint
+app.post('/chat', async (req, res) => {
+    try {
+        res.setHeader('Content-Type', 'application/json');
+        
+        const { message } = req.body;
+        console.log('Chat endpoint hit. Message:', message);
+        console.log('OpenAI Key available:', !!process.env.OPENAI_API_KEY);
+
+        if (!message) {
+            throw new Error('No message provided');
+        }
+
+        console.log('Sending request to OpenAI...');
+        const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+            model: 'gpt-4-turbo-preview',
+            messages: [
+                { role: 'system', content: 'You are a helpful assistant.' },
+                { role: 'user', content: message }
+            ],
+            temperature: 0.7,
+            max_tokens: 150
+        }, {
+            headers: {
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log('OpenAI response received:', {
+            status: response.status,
+            message: response.data.choices[0].message.content.substring(0, 50) + '...'
+        });
+
+        res.json({
+            message: response.data.choices[0].message.content
+        });
+    } catch (error) {
+        console.error('Chat error:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status
+        });
+        res.status(500).json({
+            error: true,
+            message: 'Failed to get response',
+            details: error.response?.data || error.message
+        });
+    }
+});
+
+// Handle 404s
+app.use((req, res) => {
+    res.status(404).json({
+        error: true,
+        message: 'Not found',
+        details: 'The requested endpoint was not found'
     });
 });
 

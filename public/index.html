@@ -100,9 +100,12 @@
             height: 500px;
             overflow-y: auto;
             margin: 20px 0;
-            padding: 10px;
-            background-color: #444654;
+            padding: 20px;
+            background-color: #2A2B32;
             border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         /* Realtime Section */
@@ -210,11 +213,18 @@
 
         /* Chat Message Styles */
         .message {
-            padding: 10px;
+            padding: 15px;
             margin: 5px 0;
             border-radius: 8px;
             max-width: 80%;
             word-wrap: break-word;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .message.you {
+            background-color: #343541;
+            margin-right: auto;
+            color: #ECECF1;
         }
 
         .message.ai {
@@ -230,35 +240,43 @@
             text-align: center;
         }
 
-        .message.you {
-            background-color: #343541;
-            margin-right: auto;
-            color: #ECECF1;
+        .chat-input-container {
+            position: relative;
+            margin-top: 20px;
         }
 
-        #conversation-display {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding: 20px;
-            height: 100%;
-            overflow-y: auto;
+        #chat-input {
+            width: 100%;
+            padding: 15px;
+            padding-right: 60px;
+            background-color: #40414F;
+            border: 1px solid #565869;
+            border-radius: 8px;
+            color: white;
             font-size: 16px;
-            line-height: 1.5;
+            resize: none;
+            min-height: 60px;
         }
 
-        #conversation-display::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        #conversation-display::-webkit-scrollbar-track {
-            background: #2A2B32;
+        .send-button {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            background-color: #10A37F;
+            color: white;
+            border: none;
             border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
         }
 
-        #conversation-display::-webkit-scrollbar-thumb {
-            background: #565869;
-            border-radius: 4px;
+        .send-button:hover {
+            background-color: #0E906F;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         button.secondary-button {
@@ -268,6 +286,60 @@
 
         button.secondary-button:hover {
             background-color: #565869;
+        }
+
+        /* Add these styles for transcription */
+        .partial-transcript {
+            opacity: 0.7;
+            font-style: italic;
+            color: #ECECF1;
+            background-color: #343541;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            max-width: 80%;
+            margin-right: auto;
+        }
+        
+        .message.you {
+            background-color: #343541;
+            margin-right: auto;
+            color: #ECECF1;
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .message.ai {
+            background-color: #444654;
+            margin-left: auto;
+            color: #ECECF1;
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        #conversation-display {
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .message strong {
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+
+        .message-content {
+            display: inline-block;
+            margin-left: 8px;
         }
     </style>
 </head>
@@ -288,13 +360,26 @@
             <div class="chat-container" id="chat-messages">
                 <!-- Chat messages will appear here -->
             </div>
-            <div class="card">
+            <div class="chat-input-container">
                 <textarea 
                     placeholder="Type your message here..." 
                     rows="4"
                     id="chat-input"
                 ></textarea>
-                <button onclick="sendChatMessage()">Send Message</button>
+                <button class="send-button" onclick="(async () => {
+                    const button = event.target;
+                    const originalText = button.textContent;
+                    button.disabled = true;
+                    button.textContent = 'Sending...';
+                    try {
+                        await sendChatMessage();
+                    } finally {
+                        button.disabled = false;
+                        button.textContent = originalText;
+                    }
+                })()">
+                    Send
+                </button>
             </div>
         </div>
 
@@ -433,23 +518,6 @@
             
             // Highlight sidebar item
             event.target.classList.add('active');
-        }
-
-        // Chat Functions
-        function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
-            
-            if (message) {
-                const chatContainer = document.getElementById('chat-messages');
-                chatContainer.innerHTML += `
-                    <div class="card">
-                        <strong>You:</strong> ${message}
-                    </div>
-                `;
-                input.value = '';
-                // Add API call here
-            }
         }
 
         // Realtime Functions
